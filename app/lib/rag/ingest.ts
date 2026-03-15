@@ -17,7 +17,8 @@ function chunkText(text: string): string[] {
 }
 
 export async function ingestPDF(buffer: Buffer, filename: string): Promise<number> {
-  const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = (await import("pdf-parse")).default;
+  const pdfParseModule = await import("pdf-parse");
+  const pdfParse = (pdfParseModule.default ?? pdfParseModule) as unknown as (buffer: Buffer) => Promise<{ text: string }>;
   const { text } = await pdfParse(buffer);
   const chunks = chunkText(text);
 
