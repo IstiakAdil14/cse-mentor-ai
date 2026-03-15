@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = require("pdf-parse");
 import { getEmbeddingsBatch } from "./embeddings";
 import { upsertVectors } from "./vectorStore";
 import crypto from "crypto";
@@ -19,6 +17,7 @@ function chunkText(text: string): string[] {
 }
 
 export async function ingestPDF(buffer: Buffer, filename: string): Promise<number> {
+  const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = (await import("pdf-parse")).default;
   const { text } = await pdfParse(buffer);
   const chunks = chunkText(text);
 
