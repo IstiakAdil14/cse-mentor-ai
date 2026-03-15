@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import AuthLoader from "@/app/components/AuthLoader";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSignupPopup, setShowSignupPopup] = useState(false);
   const searchParams = useSearchParams();
@@ -37,12 +39,14 @@ export default function LoginPage() {
       }
       setLoading(false);
     } else {
+      setAuthLoading(true);
       window.location.href = "/chat";
     }
   };
 
   return (
     <div className="auth-bg">
+      {authLoading && <AuthLoader message="Signing you in..." subtext="Loading your workspace" />}
       {/* Not Registered Popup */}
       {showSignupPopup && (
         <div
@@ -147,7 +151,7 @@ export default function LoginPage() {
           {/* Google OAuth */}
           <div className="animate-slide-up-delayed" style={{ marginTop: error ? "1rem" : 0 }}>
             <button
-              onClick={() => signIn("google", { callbackUrl: "/" }, { prompt: "select_account" })}
+              onClick={() => { setAuthLoading(true); signIn("google", { callbackUrl: "/" }, { prompt: "select_account" }); }}
               className="btn-google"
               type="button"
             >

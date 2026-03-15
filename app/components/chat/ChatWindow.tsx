@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import ChatInput from "./ChatInput";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
@@ -115,6 +116,8 @@ const CATEGORY_COLORS = [
 ];
 
 export default function ChatWindow({ chatId, onTitleChange }: Props) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name?.split(" ")[0] ?? "there";
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState("");
@@ -211,7 +214,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
             <div style={{ textAlign: "center", marginBottom: "2rem" }}>
               <div style={{ fontSize: "3rem", marginBottom: "0.75rem" }}>🎓</div>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.4rem" }}>
-                What do you want to learn today?
+                What do you want to learn today, {userName}?
               </h2>
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 Pick a question below or type your own

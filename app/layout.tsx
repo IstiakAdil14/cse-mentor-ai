@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SessionWrapper from "./components/SessionWrapper";
+import PageLoader from "./components/PageLoader";
 
 export const metadata: Metadata = {
   title: "CSE Mentor AI",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionWrapper>{children}</SessionWrapper>
+        <SessionWrapper>
+          <PageLoader>{children}</PageLoader>
+        </SessionWrapper>
       </body>
     </html>
   );
