@@ -43,7 +43,9 @@ export const authOptions: AuthOptions = {
         await connectDB();
         const existingUser = await User.findOne({ email: user.email });
         const cookieStore = await cookies();
-        const callbackUrl = cookieStore.get("next-auth.callback-url")?.value ?? "";
+        const callbackUrl =
+          cookieStore.get("__Secure-next-auth.callback-url")?.value ??
+          cookieStore.get("next-auth.callback-url")?.value ?? "";
         const isRegisterFlow = callbackUrl.includes("/register");
 
         if (isRegisterFlow) {
