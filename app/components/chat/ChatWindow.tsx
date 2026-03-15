@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import ChatInput from "./ChatInput";
 import MessageBubble from "./MessageBubble";
@@ -124,7 +124,18 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [navVisible, setNavVisible] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const current = el.scrollTop;
+    setNavVisible(current < lastScrollY.current || current < 60);
+    lastScrollY.current = current;
+  }, []);
 
   // Pick 8 random questions once per chat load
   const suggestions = useMemo(() => getRandomQuestions(8), [chatId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -202,26 +213,49 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-primary)" }}>
 
-      {/* Mobile top bar */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-glass)] md:hidden bg-[var(--bg-secondary)]">
-        <button
-          onClick={openSidebar}
-          className="flex flex-col gap-1.5 p-1.5 rounded-lg border border-[var(--border-glass)]"
-          aria-label="Open sidebar"
-        >
-          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
-          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
-          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
-        </button>
-        <span
-          className="font-bold text-sm"
-          style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-        >
-          🎓 CSE Mentor AI
-        </span>
+      {/* Navbar — always on desktop, hide-on-scroll-down on mobile */}
+      <div
+        className={[
+          "flex items-center justify-between px-4 py-3 border-b border-[var(--border-glass)]",
+          "bg-[var(--bg-secondary)]/80 backdrop-blur-md",
+          "transition-transform duration-300 ease-in-out",
+          "md:translate-y-0",
+          navVisible ? "translate-y-0" : "-translate-y-full",
+        ].join(" ")}
+        style={{ position: "sticky", top: 0, zIndex: 10 }}
+      >
+        {/* Left: hamburger (mobile) + title */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openSidebar}
+            className="md:hidden flex flex-col gap-1.5 p-1.5 rounded-lg border border-[var(--border-glass)] hover:bg-white/5 transition-colors"
+            aria-label="Open sidebar"
+          >
+            <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+            <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+            <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+          </button>
+          <span
+            className="font-bold text-sm"
+            style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+          >
+            🎓 CSE Mentor AI
+          </span>
+        </div>
+
+        {/* Right: message count pill */}
+        {messages.length > 0 && (
+          <span className="text-xs px-2.5 py-1 rounded-full bg-white/5 border border-[var(--border-glass)] text-[var(--text-muted)]">
+            {messages.length} message{messages.length !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4"
+      >
 
         {loading && (
           <div style={{ textAlign: "center", marginTop: "4rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
