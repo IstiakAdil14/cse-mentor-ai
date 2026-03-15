@@ -42,7 +42,9 @@ export default function MessageBubble({ role, content }: Props) {
 
       <div
         style={{
-          maxWidth: "75%",
+          maxWidth: "min(75%, 100%)",
+          minWidth: 0,
+          overflow: "hidden",
           padding: "0.75rem 1rem",
           borderRadius: isUser ? "1.25rem 1.25rem 0.25rem 1.25rem" : "1.25rem 1.25rem 1.25rem 0.25rem",
           background: isUser
@@ -53,6 +55,7 @@ export default function MessageBubble({ role, content }: Props) {
           fontSize: "0.92rem",
           lineHeight: 1.6,
           wordBreak: "break-word",
+          overflowWrap: "anywhere",
         }}
       >
         {isUser ? (
@@ -135,7 +138,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   };
 
   return (
-    <div style={{ position: "relative", margin: "0.5rem 0", borderRadius: "0.5rem", overflow: "hidden" }}>
+    <div style={{ position: "relative", margin: "0.5rem 0", borderRadius: "0.5rem", overflow: "hidden", maxWidth: "100%" }}>
       <div
         style={{
           display: "flex",
@@ -166,7 +169,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
         style={oneDark}
         language={language}
         PreTag="div"
-        customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.85rem" }}
+        customStyle={{ margin: 0, borderRadius: 0, fontSize: "0.85rem", overflowX: "auto", maxWidth: "100%" }}
       >
         {code}
       </SyntaxHighlighter>

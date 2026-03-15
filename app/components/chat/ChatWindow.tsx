@@ -221,7 +221,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
 
         {loading && (
           <div style={{ textAlign: "center", marginTop: "4rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
