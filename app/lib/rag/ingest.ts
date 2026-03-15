@@ -17,8 +17,8 @@ function chunkText(text: string): string[] {
 }
 
 export async function ingestPDF(buffer: Buffer, filename: string): Promise<number> {
-  const pdfParseModule = await import("pdf-parse");
-  const pdfParse = (pdfParseModule.default ?? pdfParseModule) as unknown as (buffer: Buffer) => Promise<{ text: string }>;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Promise<{ text: string }>;
   const { text } = await pdfParse(buffer);
   const chunks = chunkText(text);
 
