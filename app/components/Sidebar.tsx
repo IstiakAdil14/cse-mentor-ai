@@ -11,7 +11,12 @@ interface Chat {
   updatedAt: string;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [creating, setCreating] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -41,6 +46,7 @@ export default function Sidebar() {
       const chat = await res.json();
       await loadChats();
       router.push(`/chat/${chat._id}`);
+      onClose();
     }
     setCreating(false);
   };
@@ -51,8 +57,7 @@ export default function Sidebar() {
     const updated = chats.filter((c) => c._id !== chatId);
     setChats(updated);
     if (activeChatId === chatId) {
-      if (updated.length > 0) router.push(`/chat/${updated[0]._id}`);
-      else router.push("/chat");
+      router.push(updated.length > 0 ? `/chat/${updated[0]._id}` : "/chat");
     }
   };
 
@@ -64,112 +69,92 @@ export default function Sidebar() {
   return (
     <>
       {signingOut && <AuthLoader message="Signing out..." subtext="See you soon" emoji="👋" />}
-      <div
-        style={{
-          width: 240,
-          background: "var(--bg-secondary)",
-          borderRight: "1px solid var(--border-glass)",
-          display: "flex",
-          flexDirection: "column",
-          padding: "1rem",
-          gap: "0.5rem",
-          height: "100%",
-          flexShrink: 0,
-        }}
+
+      <aside
+        className={[
+          // Base
+          "fixed md:relative inset-y-0 left-0 z-30",
+          "w-60 flex flex-col gap-2 p-4 h-full flex-shrink-0",
+          "bg-[var(--bg-secondary)] border-r border-[var(--border-glass)]",
+          // Slide transition on mobile
+          "transition-transform duration-300 ease-in-out",
+          open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        ].join(" ")}
       >
+        {/* Close button — mobile only */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 md:hidden text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+          aria-label="Close sidebar"
+        >
+          ✕
+        </button>
+
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-          <span style={{ fontSize: "1.4rem" }}>🎓</span>
-          <span style={{ fontWeight: 700, fontSize: "0.95rem", background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-2xl">🎓</span>
+          <span
+            className="font-bold text-sm"
+            style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+          >
             CSE Mentor AI
           </span>
         </div>
 
-        {/* New Chat Button */}
+        {/* New Chat */}
         <button
           onClick={newChat}
           disabled={creating}
-          style={{
-            padding: "0.6rem 0.75rem",
-            background: "var(--gradient-primary)",
-            border: "none",
-            borderRadius: "0.6rem",
-            color: "white",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            cursor: creating ? "not-allowed" : "pointer",
-            opacity: creating ? 0.6 : 1,
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            marginBottom: "0.5rem",
-          }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-sm font-semibold mb-1 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: "var(--gradient-primary)" }}
         >
-          <span style={{ fontSize: "1rem" }}>+</span>
+          <span className="text-base">+</span>
           {creating ? "Creating..." : "New Chat"}
         </button>
 
-        {/* Nav Links */}
+        {/* Profile link */}
         <a
           href="/profile"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.6rem",
-            padding: "0.5rem 0.75rem",
-            borderRadius: "0.6rem",
-            color: "var(--text-secondary)",
-            fontSize: "0.85rem",
-            textDecoration: "none",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "var(--text-primary)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all"
         >
           <span>👤</span> Profile
         </a>
 
         {/* Divider */}
-        <div style={{ height: 1, background: "var(--border-glass)", margin: "0.25rem 0" }} />
+        <div className="h-px bg-[var(--border-glass)] my-1" />
 
-        {/* Chat History */}
-        <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 0.25rem" }}>
+        {/* Recent Chats label */}
+        <p className="text-[0.7rem] text-[var(--text-muted)] font-semibold uppercase tracking-widest px-1">
           Recent Chats
         </p>
 
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+        {/* Chat list */}
+        <div className="flex-1 overflow-y-auto flex flex-col gap-0.5">
           {chats.length === 0 && (
-            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", padding: "0.5rem 0.25rem" }}>
-              No chats yet. Start one!
-            </p>
+            <p className="text-xs text-[var(--text-muted)] px-1 py-2">No chats yet. Start one!</p>
           )}
           {chats.map((chat) => (
             <div
               key={chat._id}
-              onClick={() => router.push(`/chat/${chat._id}`)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "0.5rem 0.6rem",
-                borderRadius: "0.5rem",
-                cursor: "pointer",
-                background: activeChatId === chat._id ? "rgba(59,130,246,0.15)" : "transparent",
-                border: activeChatId === chat._id ? "1px solid rgba(59,130,246,0.25)" : "1px solid transparent",
-                transition: "all 0.15s",
-                gap: "0.4rem",
-              }}
-              onMouseEnter={(e) => { if (activeChatId !== chat._id) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-              onMouseLeave={(e) => { if (activeChatId !== chat._id) e.currentTarget.style.background = "transparent"; }}
+              onClick={() => { router.push(`/chat/${chat._id}`); onClose(); }}
+              className={[
+                "flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-all gap-1.5 border",
+                activeChatId === chat._id
+                  ? "bg-blue-500/15 border-blue-500/25"
+                  : "border-transparent hover:bg-white/[0.04]",
+              ].join(" ")}
             >
-              <span style={{ fontSize: "0.82rem", color: activeChatId === chat._id ? "var(--text-primary)" : "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+              <span
+                className={[
+                  "text-[0.82rem] truncate flex-1",
+                  activeChatId === chat._id ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                ].join(" ")}
+              >
                 💬 {chat.title}
               </span>
               <button
                 onClick={(e) => deleteChat(e, chat._id)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "0.75rem", padding: "0.1rem 0.2rem", borderRadius: "0.25rem", flexShrink: 0, opacity: 0.6 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.color = "#fca5a5"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.6"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                className="text-[var(--text-muted)] hover:text-red-300 text-xs px-1 py-0.5 rounded opacity-60 hover:opacity-100 transition-all flex-shrink-0"
                 title="Delete chat"
               >
                 ✕
@@ -178,14 +163,12 @@ export default function Sidebar() {
           ))}
         </div>
 
-        {/* RAG Upload */}
         <RAGUpload />
 
-        {/* Sign out */}
-        <button onClick={handleSignOut} className="btn-signout" style={{ width: "100%", marginTop: "0.25rem" }}>
+        <button onClick={handleSignOut} className="btn-signout w-full mt-1">
           Sign Out
         </button>
-      </div>
+      </aside>
     </>
   );
 }

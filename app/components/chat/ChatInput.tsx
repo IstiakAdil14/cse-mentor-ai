@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Props {
   onSend: (message: string) => void;
@@ -9,6 +9,15 @@ interface Props {
 export default function ChatInput({ onSend, disabled }: Props) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const handleSend = () => {
     if (!input.trim() || disabled) return;
@@ -24,16 +33,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
   };
 
   return (
-    <div
-      style={{
-        padding: "1rem 1.25rem",
-        borderTop: "1px solid var(--border-glass)",
-        background: "var(--bg-secondary)",
-        display: "flex",
-        gap: "0.75rem",
-        alignItems: "flex-end",
-      }}
-    >
+    <div className="flex items-end gap-3 px-4 py-3 border-t border-[var(--border-glass)] bg-[var(--bg-secondary)]">
       <textarea
         ref={textareaRef}
         value={input}
@@ -44,44 +44,24 @@ export default function ChatInput({ onSend, disabled }: Props) {
             handleSend();
           }
         }}
-        placeholder="Ask a CS question... (Enter to send, Shift+Enter for new line)"
+        placeholder={isMobile ? "Ask a CS question..." : "Ask a CS question... (Enter to send, Shift+Enter for new line)"}
         disabled={disabled}
         rows={1}
-        style={{
-          flex: 1,
-          padding: "0.75rem 1rem",
-          background: "rgba(15, 23, 42, 0.7)",
-          border: "1px solid var(--border-glass)",
-          borderRadius: "0.75rem",
-          color: "var(--text-primary)",
-          fontSize: "0.95rem",
-          fontFamily: "inherit",
-          outline: "none",
-          resize: "none",
-          lineHeight: 1.5,
-          overflowY: "auto",
-          opacity: disabled ? 0.5 : 1,
-          transition: "border-color 0.2s",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "var(--accent-blue)")}
-        onBlur={(e) => (e.target.style.borderColor = "var(--border-glass)")}
+        className={[
+          "flex-1 px-4 py-3 rounded-xl resize-none overflow-y-auto leading-relaxed text-[0.95rem]",
+          "bg-[rgba(15,23,42,0.7)] border border-[var(--border-glass)] text-[var(--text-primary)]",
+          "placeholder:text-[var(--text-muted)] font-[inherit]",
+          "focus:outline-none focus:border-[var(--accent-blue)] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]",
+          "transition-[border-color,box-shadow] duration-200",
+          disabled ? "opacity-50 cursor-not-allowed" : "",
+        ].join(" ")}
+        style={{ maxHeight: 120 }}
       />
       <button
         onClick={handleSend}
         disabled={disabled || !input.trim()}
-        style={{
-          padding: "0.75rem 1.25rem",
-          background: "var(--gradient-primary)",
-          border: "none",
-          borderRadius: "0.75rem",
-          color: "white",
-          fontWeight: 600,
-          fontSize: "0.9rem",
-          cursor: disabled || !input.trim() ? "not-allowed" : "pointer",
-          opacity: disabled || !input.trim() ? 0.5 : 1,
-          transition: "all 0.2s ease",
-          whiteSpace: "nowrap",
-        }}
+        className="px-5 py-3 rounded-xl text-white font-semibold text-sm whitespace-nowrap transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:brightness-110 hover:enabled:-translate-y-0.5"
+        style={{ background: "var(--gradient-primary)" }}
       >
         Send ↑
       </button>
