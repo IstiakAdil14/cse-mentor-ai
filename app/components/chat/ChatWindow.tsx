@@ -199,7 +199,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
 
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-primary)" }}>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pt-14 md:pt-4">
 
         {loading && (
           <div style={{ textAlign: "center", marginTop: "4rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
