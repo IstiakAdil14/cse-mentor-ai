@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import ChatInput from "./ChatInput";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
+import { useSidebar } from "@/app/lib/SidebarContext";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -116,6 +117,7 @@ const CATEGORY_COLORS = [
 ];
 
 export default function ChatWindow({ chatId, onTitleChange }: Props) {
+  const { openSidebar } = useSidebar();
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] ?? "there";
   const [messages, setMessages] = useState<Message[]>([]);
@@ -199,7 +201,27 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
 
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-primary)" }}>
-      <div className="flex-1 overflow-y-auto p-4 pt-14 md:pt-4">
+
+      {/* Mobile top bar */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-glass)] md:hidden bg-[var(--bg-secondary)]">
+        <button
+          onClick={openSidebar}
+          className="flex flex-col gap-1.5 p-1.5 rounded-lg border border-[var(--border-glass)]"
+          aria-label="Open sidebar"
+        >
+          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+          <span className="block w-5 h-0.5 bg-[var(--text-secondary)]" />
+        </button>
+        <span
+          className="font-bold text-sm"
+          style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+        >
+          🎓 CSE Mentor AI
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
 
         {loading && (
           <div style={{ textAlign: "center", marginTop: "4rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>
