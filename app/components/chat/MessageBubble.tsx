@@ -1,5 +1,6 @@
 "use client";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useState } from "react";
@@ -42,7 +43,7 @@ export default function MessageBubble({ role, content }: Props) {
 
       <div
         style={{
-          maxWidth: "min(75%, 100%)",
+          maxWidth: isUser ? "min(75%, 100%)" : "min(90%, 100%)",
           minWidth: 0,
           overflow: "hidden",
           padding: "0.75rem 1rem",
@@ -62,6 +63,7 @@ export default function MessageBubble({ role, content }: Props) {
           <span>{content}</span>
         ) : (
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               code({ className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || "");
@@ -117,6 +119,30 @@ export default function MessageBubble({ role, content }: Props) {
                     {children}
                   </blockquote>
                 );
+              },
+              table({ children }) {
+                return (
+                  <div style={{ overflowX: "auto", margin: "0.75rem 0" }}>
+                    <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>{children}</table>
+                  </div>
+                );
+              },
+              th({ children }) {
+                return (
+                  <th style={{ padding: "0.5rem 0.75rem", background: "rgba(59,130,246,0.15)", border: "1px solid var(--border-glass)", color: "var(--text-primary)", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap" }}>
+                    {children}
+                  </th>
+                );
+              },
+              td({ children }) {
+                return (
+                  <td style={{ padding: "0.45rem 0.75rem", border: "1px solid var(--border-glass)", color: "var(--text-secondary)", verticalAlign: "top" }}>
+                    {children}
+                  </td>
+                );
+              },
+              tr({ children }) {
+                return <tr style={{ transition: "background 0.15s" }}>{children}</tr>;
               },
             }}
           >
