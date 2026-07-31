@@ -4,7 +4,7 @@ import { aiCache } from "@/app/lib/cache";
 import { streamResponse } from "@/app/lib/ai/router";
 import { checkRateLimit } from "@/app/lib/rate-limit";
 import { retrieveContext } from "@/app/lib/rag/retrieve";
-import { SYSTEM_PROMPT } from "@/app/utils/prompts";
+import { SYSTEM_PROMPT, LEVEL_INSTRUCTIONS, type QuestionLevel } from "@/app/utils/prompts";
 import { connectDB } from "@/app/lib/mongodb";
 import Message from "@/app/models/Message";
 import Chat from "@/app/models/Chat";
@@ -26,9 +26,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages, chatId } = await req.json();
+    const { messages, chatId, level } = await req.json();
     const lastMessage: string = messages.at(-1)?.content ?? "";
-    const cacheKey = lastMessage.trim().toLowerCase();
+    const questionLevel: QuestionLevel =
+      level === "basic" || level === "intermediate" || level === "standard" ? level : "intermediate";
+    const cacheKey = `${questionLevel}:${lastMessage.trim().toLowerCase()}`;
 
     // Save user message to DB
     if (chatId) {
@@ -62,11 +64,12 @@ export async function POST(req: Request) {
       });
     }
 
-    // RAG context
+    // RAG context + level instructions
     const ragContext = await retrieveContext(lastMessage);
+    const levelInstruction = LEVEL_INSTRUCTIONS[questionLevel];
     const systemContent = ragContext
-      ? `${SYSTEM_PROMPT}\n\n## Relevant Study Materials\n${ragContext}`
-      : SYSTEM_PROMPT;
+      ? `${SYSTEM_PROMPT}\n\n${levelInstruction}\n\n## Relevant Study Materials\n${ragContext}`
+      : `${SYSTEM_PROMPT}\n\n${levelInstruction}`;
 
     const allMessages = [
       { role: "system" as const, content: systemContent },

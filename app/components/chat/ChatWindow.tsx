@@ -5,6 +5,7 @@ import ChatInput from "./ChatInput";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import { useSidebar } from "@/app/lib/SidebarContext";
+import type { QuestionLevel } from "@/app/utils/prompts";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -13,7 +14,41 @@ interface Props {
   onTitleChange?: (title: string) => void;
 }
 
-const ALL_QUESTIONS = [
+// ── Question banks per level ───────────────────────────────────────────────────
+
+const BASIC_QUESTIONS = [
+  // Programming Basics
+  "What is a variable and how do I use one in Python?",
+  "What is an if-else statement? Explain with an example",
+  "What is a loop? Explain for loops and while loops",
+  "What is a function and why are functions useful?",
+  "What is an array in programming?",
+  "What is a string in programming?",
+  "How do I read input and print output in Python?",
+  "What is the difference between integers and floats?",
+
+  // CS Fundamentals (beginner)
+  "What is a computer program in simple terms?",
+  "What is the difference between hardware and software?",
+  "What is an operating system and what does it do?",
+  "What is the CPU and what does it do?",
+  "What is RAM vs storage?",
+  "How does a computer store numbers?",
+  "What is binary code?",
+  "What is the internet in simple terms?",
+
+  // Simple DSA
+  "What is an algorithm in simple words?",
+  "What is a data structure? Give some examples",
+  "How do you sort a list of numbers?",
+  "What is linear search vs binary search?",
+  "What is a stack? Explain with a real-life example",
+  "What is a queue? Explain with a real-life example",
+  "What is a linked list in simple terms?",
+  "What is recursion in simple terms?",
+];
+
+const INTERMEDIATE_QUESTIONS = [
   // Algorithms
   "Explain Big O notation with examples",
   "What is the difference between BFS and DFS?",
@@ -54,7 +89,9 @@ const ALL_QUESTIONS = [
   "What are design patterns? Name a few",
   "What is dependency injection?",
   "Explain the MVC architecture pattern",
+];
 
+const STANDARD_QUESTIONS = [
   // Systems & OS
   "What is a deadlock and how do you prevent it?",
   "Explain virtual memory and paging",
@@ -104,10 +141,43 @@ const ALL_QUESTIONS = [
   "Explain how a compiler works",
 ];
 
-function getRandomQuestions(count: number): string[] {
-  const shuffled = [...ALL_QUESTIONS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+const QUESTIONS_BY_LEVEL: Record<QuestionLevel, string[]> = {
+  basic: BASIC_QUESTIONS,
+  intermediate: INTERMEDIATE_QUESTIONS,
+  standard: STANDARD_QUESTIONS,
+};
+
+const LEVEL_META: Record<
+  QuestionLevel,
+  { label: string; icon: string; description: string; color: string; activeBg: string; activeBorder: string }
+> = {
+  basic: {
+    label: "Basic",
+    icon: "🌱",
+    description: "Beginner-friendly",
+    color: "var(--accent-cyan)",
+    activeBg: "rgba(6,182,212,0.12)",
+    activeBorder: "rgba(6,182,212,0.45)",
+  },
+  intermediate: {
+    label: "Intermediate",
+    icon: "📘",
+    description: "Core fundamentals",
+    color: "var(--accent-blue)",
+    activeBg: "rgba(59,130,246,0.12)",
+    activeBorder: "rgba(59,130,246,0.45)",
+  },
+  standard: {
+    label: "Standard",
+    icon: "🎯",
+    description: "Interview prep",
+    color: "var(--accent-purple)",
+    activeBg: "rgba(139,92,246,0.12)",
+    activeBorder: "rgba(139,92,246,0.45)",
+  },
+};
+
+const LEVEL_ORDER: QuestionLevel[] = ["basic", "intermediate", "standard"];
 
 const CATEGORY_COLORS = [
   { bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.25)", color: "var(--accent-blue)" },
@@ -115,6 +185,12 @@ const CATEGORY_COLORS = [
   { bg: "rgba(6,182,212,0.1)", border: "rgba(6,182,212,0.25)", color: "var(--accent-cyan)" },
   { bg: "rgba(236,72,153,0.1)", border: "rgba(236,72,153,0.25)", color: "var(--accent-pink)" },
 ];
+
+function getRandomQuestions(level: QuestionLevel, count: number): string[] {
+  const pool = QUESTIONS_BY_LEVEL[level];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 export default function ChatWindow({ chatId, onTitleChange }: Props) {
   const { openSidebar } = useSidebar();
@@ -125,6 +201,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [navVisible, setNavVisible] = useState(true);
+  const [level, setLevel] = useState<QuestionLevel>("intermediate");
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
@@ -137,8 +214,8 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
     lastScrollY.current = current;
   }, []);
 
-  // Pick 8 random questions once per chat load
-  const suggestions = useMemo(() => getRandomQuestions(8), [chatId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Pick 8 random questions for the selected level
+  const suggestions = useMemo(() => getRandomQuestions(level, 8), [chatId, level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setLoading(true);
@@ -162,6 +239,11 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  const handleLevelChange = (newLevel: QuestionLevel) => {
+    setLevel(newLevel);
+    setError("");
+  };
+
   const sendMessage = async (content: string) => {
     setError("");
     const newMessages: Message[] = [...messages, { role: "user", content }];
@@ -173,7 +255,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, chatId }),
+        body: JSON.stringify({ messages: newMessages, chatId, level }),
       });
 
       if (res.status === 429) {
@@ -267,7 +349,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
         {!loading && messages.length === 0 && (
           <div style={{ maxWidth: 720, margin: "0 auto", paddingTop: "2rem" }}>
             {/* Hero */}
-            <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: "3rem", marginBottom: "0.75rem" }}>🎓</div>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.4rem" }}>
                 What do you want to learn today, {userName}?
@@ -275,6 +357,63 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                 Pick a question below or type your own
               </p>
+            </div>
+
+            {/* Level Selector */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
+              <div
+                role="tablist"
+                aria-label="Question level"
+                style={{
+                  display: "inline-flex",
+                  gap: "0.35rem",
+                  padding: "0.3rem",
+                  background: "rgba(15,23,42,0.6)",
+                  border: "1px solid var(--border-glass)",
+                  borderRadius: "0.85rem",
+                }}
+              >
+                {LEVEL_ORDER.map((lvl) => {
+                  const meta = LEVEL_META[lvl];
+                  const active = level === lvl;
+                  return (
+                    <button
+                      key={lvl}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => handleLevelChange(lvl)}
+                      title={meta.description}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.45rem",
+                        padding: "0.5rem 0.9rem",
+                        borderRadius: "0.6rem",
+                        fontSize: "0.8rem",
+                        fontWeight: active ? 700 : 500,
+                        color: active ? meta.color : "var(--text-muted)",
+                        background: active ? meta.activeBg : "transparent",
+                        border: `1px solid ${active ? meta.activeBorder : "transparent"}`,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.background = "transparent";
+                        }
+                      }}
+                    >
+                      <span>{meta.icon}</span>
+                      <span>{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Question Cards Grid */}
@@ -320,7 +459,7 @@ export default function ChatWindow({ chatId, onTitleChange }: Props) {
 
             {/* Refresh hint */}
             <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1.25rem" }}>
-              💡 Questions change every new chat · {ALL_QUESTIONS.length} topics available
+              💡 Questions change every new chat · {QUESTIONS_BY_LEVEL[level].length} {LEVEL_META[level].label.toLowerCase()} topics available
             </p>
           </div>
         )}

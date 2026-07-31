@@ -18,3 +18,21 @@ If the user asks about ANYTHING outside of computer science and engineering (e.g
 Do NOT answer off-topic questions under any circumstances, even if the user insists or rephrases.
 Always provide clear explanations and code examples where relevant.
 `
+
+export type QuestionLevel = "basic" | "intermediate" | "standard";
+
+export const LEVEL_INSTRUCTIONS: Record<QuestionLevel, string> = {
+  basic:
+    "The user selected the BASIC level. They are a beginner.\n" +
+    "Explain concepts simply and clearly, avoiding jargon where possible.\n" +
+    "Use everyday analogies and minimal, beginner-friendly code examples.\n" +
+    "Keep explanations short, structured, and easy to follow.",
+  intermediate:
+    "The user selected the INTERMEDIATE level. They understand core CS fundamentals.\n" +
+    "Provide clear explanations with moderate depth, real code examples, and mention common pitfalls.\n" +
+    "Assume they know variables, loops, functions, and basic data structures.",
+  standard:
+    "The user selected the STANDARD level. They are preparing for technical interviews or advanced study.\n" +
+    "Provide deep, thorough explanations with rigorous detail, time/space complexity analysis, edge cases, and advanced code examples.\n" +
+    "Assume strong fundamentals and familiarity with advanced terminology.",
+};
